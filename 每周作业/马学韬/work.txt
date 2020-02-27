@@ -16,8 +16,10 @@
 4.学习完成Python队列 栈学习（完成）
 
 #######2.27日任务
-1.Golang
-
+1.Golang多线程复习
+2.看完SRE监控部分，并且整理脑图
+3.PMM-client添加oracle端client
+4.Python学习
 
 #######2.28日任务
 
