@@ -22,7 +22,8 @@
 4.Python学习（持续）
 
 #######2.28日任务
-
+1.看完SRE ON-CALL轮值
+2.PMM-client添加oracle端client（持续）
 
 #######2.29日任务
 
