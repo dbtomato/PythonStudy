@@ -1,0 +1,522 @@
+---
+title: 09 - 函数
+tags: 函数,function,变量,作用域,return
+renderNumberedHeading: true
+grammar_cjkRuby: true
+---
+
+Author:  Qiao My
+Create_Time: 2020-2-25
+
+[toc]
+
+```python
+def adder(x):
+    def wrapper(y):
+        return x + y
+    return wrapper
+# 定义闭包
+adder5 = adder(5)
+# 输出 15
+adder5(10)
+# 输出 11
+adder5(6)
+```
+# 一、函数的作用
+编程大师Martin Fowler先生曾经说过：“代码有很多种坏味道，重复是最坏的一种！”，高质量的代码首先要解决的就是重复代码的问题。
+
+# 二、定义函数
+Python 使用 `def` 关键字定义函数。
+一个函数包括：`def` 关键字、函数名、圆括号、函数变量、冒号、缩进块中的函数体、return
+语法如下：
+```python
+def func_name(parameters0[,parameters1...]):
+    "Function description函数说明"
+    func_body
+    return [expression0,expression1...]
+    [yield [expression0,expression1...]]
+```
+
+# 三、函数的参数
+## 1. 形参和实参
+**形参**是指出现在函数定义中的名称；**实参**是在调用函数时实际传入的值。[^参考0]
+实参只包含两种：
+- 关键字参数：在函数调用中前面带有标识符（即函数定义的参数名，例如 "name="）或者作为包含在前面带有 `**` 的字典(dict)里的值传入。
+- 位置参数：不属于关键字参数的参数。位置参数可出现于参数列表的开头、`/`前面，或者作为前面带有 `*` 的 iterable 里的元素被传入。
+
+## 2. 参数的类型(形参parameter)
+官方文档中，参数(形参)有5种：[^参考1]
+- positional-or-keyword：默认参数，位置或关键字
+- var-positional：可变位置(variable positional)
+- keyword-only：仅限关键字
+- var-keyword：可变关键字(variable keyword)
+- positional-only：仅限位置，3.8 新特性[^参考2]
+
+### 位置or关键字参数
+默认的形参类型，指定一个可以作为 位置参数 传入也可以作为 关键字参数 传入的实参。
+例1：
+```python
+#可写函数说明
+def printme( str ):
+   "打印任何传入的字符串"
+   print str
+   return
+# 传入位置参数
+printme("My string")
+# 传入关键字参数
+printme(str="My string")
+```
+
+### 不定长/可变[位置]参数
+在不确定参数个数的时候，我们可以使用可变参数。
+加了星号 `*` 的变量名会存放所有(任意个)未命名的变量参数，存放类型为tuple。
+语法如下：
+```python
+def functionname([formal_args,] *var_args_tuple):
+   "函数_文档字符串"
+   function_suite
+   return [expression]
+```
+例2：
+```python
+# 可写函数说明
+def printinfo( arg1, *vartuple ):
+   "打印任何传入的参数"
+   print "输出: "
+   print arg1
+   for var in vartuple:
+      print var
+   return
+ 
+# 调用printinfo 函数
+printinfo( 10 )
+printinfo( 70, 60, 50 )
+```
+可变参数的函数可以接受 list、tuple 类型实参的传入，**Python允许在list或tuple前面加一个`*`号，把list或tuple的元素变成可变参数传进去**
+例3：
+```python
+def calc(*numbers):
+    sum = 0
+    for n in numbers:
+        sum = sum + n * n
+    return sum
+# 调用函数
+nums = [1, 2, 3]
+calc(nums[0], nums[1], nums[2])
+# 简化写法
+calc(*nums)
+```
+
+
+### [可变]关键字参数
+函数调用使用关键字参数来确定传入的参数值。
+使用关键字参数允许函数调用时参数的顺序与声明时不一致，因为Python解释器能够使用参数名匹配参数值。
+例4：
+```python
+#可写函数说明
+def printinfo( name, age ):
+   "打印任何传入的字符串"
+   print "Name: ", name
+   print "Age ", age
+   return
+
+#调用printinfo函数
+printinfo( age=50, name="miki" )
+```
+
+**可变关键字参数，在函数内部会自动组成一个dict**。 这里和可变位置参数组成tuple 相对应。
+可变关键字参数语法：
+```python
+def func(args, **kwargs): ...
+```
+和可变位置参数类似，**Python允许在dict前面加 `**`号，把dict的所有key-value用关键字参数传入函数中`**`标识的参数**：
+例5：
+```python
+def person(name, age, **kw):
+    print('name:', name, 'age:', age, 'other:', kw)
+# 调用函数
+extra = {'city': 'Beijing', 'job': 'Engineer'}
+person('Jack', 24, city=extra['city'], job=extra['job'])
+# 简化写法
+person('Jack', 24, **extr)
+```
+注意：
+上例中，kw获得的dict是extra的一份拷贝，对kw的改动不会影响到函数外的extra。
+即，**当dict作为参数传入函数时，函数仅获得原dict的一份copy，函数内对copy的修改不会影响到函数外的原dict。**
+
+### 命名/仅限关键字参数
+在单个或多个参数前，添加`*`分隔符，即可将分隔符`*`后的参数定义为命名/仅限关键字参数。
+如果函数定义中已经有了一个可变位置参数，该参数之后(右边)的命名关键字参数不需要`*`分隔符，必须通过命名关键字参数传入。见语法第二行
+语法：
+```python
+def func(args, *, kw_only1=, kw_only2): ...
+def func(*args, kw_only1=default_value, kw_only2): ...
+```
+**分隔符`*`后面的参数，只能是关键字参数**，如传入位置参数则报错
+
+例6：
+```python
+def person(name, age, *, city, job):
+    print(name, age, city, job)
+# 调用函数
+person('Jack', 24, city='Beijing', job='Engineer')
+```
+**命名/仅限关键字参数 允许有缺省值**：
+例7：
+```python
+def person(name, age, *, city='Beijing', job):
+    print(name, age, city, job)
+# 函数调用
+person('Jack', 24, job='Engineer')
+```
+
+### 仅限位置参数
+通过分隔符`/`，定义分隔符之前(左边)的参数为仅限位置参数
+语法：
+```python
+def f(pos1, pos2, /, pos_or_kwd, *, kwd1, kwd2):
+      -----------    ----------     ----------
+        |             |                  |
+        |        Positional or keyword   |
+        |                                - Keyword only
+         -- Positional only
+```
+注意：
+- `/`左边的所有参数都被视为 positional-only
+- 如果函数定义中没有指定`/`，那么这个函数不接受任何 positional-only参数
+- 针对positional-only 参数的可选值的逻辑与针对 `位置或关键字`参数的逻辑相同的。
+- 一旦一个positional-only参数被设置默认值， 那么接下来的`positional-only 参数`和`位置或关键字参数`也需要设置默认值。
+- 没有默认值的positional-only参数就是所需要的positional-only参数。
+
+```python
+def name(positional_only_parameters, /, positional_or_keyword_parameters,
+         *, keyword_only_parameters):
+# 以下均为合法定义
+def name(p1, p2, /, p_or_kw, *, kw):
+def name(p1, p2=None, /, p_or_kw=None, *, kw):
+def name(p1, p2=None, /, *, kw):
+def name(p1, p2=None, /):
+def name(p1, p2, /, p_or_kw):
+def name(p1, p2, /):
+```
+
+
+### 默认参数
+Python中，函数定义时参数可以有默认值。
+调用函数时，默认参数的值如果没有传入，则传入默认值。
+
+注意：
+- 必选参数(没有设置默认值的默认参数)在前，默认参数在后，否则解释器会报错。
+- 当函数有多个参数时，把变化大的参数放前面，变化小的参数放后面。变化小的参数就可以作为默认参数。
+
+> 试想一下，如果 必选参数放在 默认参数后面，当只传入1个参数时，这1个参数会传给默认参数，而必选参数则没有传入，当然会有问题。
+
+默认参数的好处: 能降低调用函数的难度。
+例8：
+```python
+#可写函数说明
+def printinfo( name, age = 35 ):
+   "打印任何传入的字符串"
+   print "Name: ", name
+   print "Age ", age
+   return
+#调用printinfo函数
+printinfo( name="miki" )
+```
+
+Python 中，函数的参数可以有默认值，也支持使用可变参数，所以 Python 并不需要像其他语言一样支持函数的重载，因为定义函数的时候就可以让它有多种不同的使用方式[^longnote0]
+
+**注意：**==默认参数必须指向不变对象！ #ff0000==
+例9：
+```python
+def add_end(L=[]):
+    L.append('END')
+    return L
+# 调用函数
+>>> add_end()
+['END', 'END']
+>>> add_end()
+['END', 'END', 'END']
+```
+在函数`add_end` 定义的时候，默认参数`L`就已经指向了对象`[]`，也可以说对象`[]`赋值给了变量`L`，每次调用函数，函数中如果修改了`L`的内容，实际是修改对象`[]`(如上例中`[]`被修改为`['END']`)，但被修改后的对象地址没有变化，函数定义时的指向也没有变，`L`仍指向被修改后的对象`['END']`，这样再次执行时默认值就变为修改后的对象`['END']`，而非`[]`。
+图解如下：
+![Python函数默认参数赋值图解](./images/Python函数默认参数赋值图解.png)
+
+对于需要接收list等可变对象的参数，默认值可以通过==None #ff0000==这个不可变对象来实现
+例10：
+```python
+def add_end(L=None):
+    if L is None:
+        L = []
+    L.append('END')
+    return L
+```
+
+> 为什么要设计str、None这样的不变对象呢？
+> 因为不变对象一旦创建，对象内部的数据就不能修改，这样就减少了由于修改数据导致的错误。此外，由于对象不变，多任务环境下同时读取对象不需要加锁，同时读一点问题都没有。我们在编写程序时，如果可以设计一个不变对象，那就尽量设计成不变对象。
+
+## 3. 参数组合
+在Python中定义函数，可以5种参数组合使用。但是请注意，**参数定义的顺序必须是：必选参数、默认参数、可变参数、命名关键字参数和关键字参数。**
+
+例11：
+```python
+def f1(a, b, c=0, *args, **kw):
+    print('a =', a, 'b =', b, 'c =', c, 'args =', args, 'kw =', kw)
+
+def f2(a, b, c=0, *, d, **kw):
+    print('a =', a, 'b =', b, 'c =', c, 'd =', d, 'kw =', kw)
+```
+
+在函数调用的时候，Python解释器自动按照参数位置和参数名称把对应的参数传进去。
+```python
+>>> f1(1, 2)
+a = 1 b = 2 c = 0 args = () kw = {}
+>>> f1(1, 2, c=3)
+a = 1 b = 2 c = 3 args = () kw = {}
+>>> f1(1, 2, 3, 'a', 'b')
+a = 1 b = 2 c = 3 args = ('a', 'b') kw = {}
+>>> f1(1, 2, 3, 'a', 'b', x=99)
+a = 1 b = 2 c = 3 args = ('a', 'b') kw = {'x': 99}
+>>> f2(1, 2, d=99, ext=None)
+a = 1 b = 2 c = 0 d = 99 kw = {'ext': None}
+```
+也可以通过一个tuple 和 dict 调用上述函数：
+```python
+>>> args = (1, 2, 3, 4)
+>>> kw = {'d': 99, 'x': '#'}
+>>> f1(*args, **kw)
+a = 1 b = 2 c = 3 args = (4,) kw = {'d': 99, 'x': '#'}
+>>> args = (1, 2, 3)
+>>> kw = {'d': 88, 'x': '#'}
+>>> f2(*args, **kw)
+a = 1 b = 2 c = 3 d = 88 kw = {'x': '#'}
+```
+**对于任意函数，都可以通过类似`func(*args, **kw)`的形式调用它，无论它的参数是如何定义的。**
+
+## 4. 参数检查
+调用函数时，如果参数个数不对，Python 解释器会自动检查出来，并跑出`TypeError`，但如果参数类型不对，Python 解释器就无法帮我们检查。
+因此，函数定义时，需要定义参数检查。
+数据类型检查可以用内置函数`isinstance()`实现。
+例12：
+```python
+def my_abs(x):
+    # 参数检查
+    if not isinstance(x, (int, float)):
+        raise TypeError('bad operand type')
+    # 方法体
+    if x >= 0:
+        return x
+    else:
+        return -x
+```
+无检查报错：
+```python
+>>> my_abs('A')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "<stdin>", line 2, in my_abs
+TypeError: unorderable types: str() >= int()
+```
+添加参数检查后报错：
+```python
+>>> my_abs('A')
+Traceback (most recent call last):
+  File "<stdin>", line 1, in <module>
+  File "<stdin>", line 3, in my_abs
+TypeError: bad operand type
+```
+
+## 5. 可更改(mutable)与不可更改(immutable)对象
+**在 python 中，类型属于对象，变量是没有类型的**：
+例13：
+```python
+a=[1,2,3]
+a="Runoob"
+```
+以上代码中，[1,2,3] 是 List 类型，"Runoob" 是 String 类型，而变量 a 是没有类型，她仅仅是一个对象的引用（一个指针），可以是 List 类型对象，也可以指向 String 类型对象
+
+
+在 python 中，strings, tuples, 和 numbers 是不可更改的对象，而 list,dict 等则是可以修改的对象。
+- 不可变类型：变量赋值 a=5 后再赋值 a=10，这里实际是新生成一个 int 值对象 10，再让 a 指向它，而 5 被丢弃，不是改变a的值，相当于新生成了a。
+- 可变类型：变量赋值 la=[1,2,3,4] 后再赋值 la[2]=5 则是将 list la 的第三个元素值更改，本身la没有动，只是其内部的一部分值被修改了。
+
+python 函数的参数传递：
+- 不可变类型：类似 c++ 的值传递，如 整数、字符串、元组。如fun（a），传递的只是a的值，没有影响a对象本身。比如在 fun（a）内部修改 a 的值，只是修改另一个复制的对象，不会影响 a 本身。
+- 可变类型：类似 c++ 的引用传递，如 列表，字典。如 fun（la），则是将 la 真正的传过去，修改后fun外部的la也会受影响
+**注意：
+这里所说 `可变类型`的参数传递 的是将 列表list、字典dict 作为一个整体传入函数，而相对应的例如当list 前加`*`号传入，函数作为可变参数接收，或将list的元素逐个与函数参数对应，此时函数接收的仅仅是list元素的copy，函数内对copy 的修改并不会影响外部原list，字典dict同理。**
+
+python 中一切都是对象，严格意义我们不能说值传递还是引用传递，我们应该说传不可变对象和传可变对象。
+
+
+# 四、函数的调用
+函数的基本结构完成后，可以通过另一个函数调用执行，也可以直接从Python提示符执行。
+
+# 五、返回值
+## 1. return
+`return [表达式]`：退出函数，选择性的向调用方返回一个表达式。
+**不带参数值的 return 语句返回 None。**
+例14：
+```python
+# 可写函数说明
+def sum( arg1, arg2 ):
+   # 返回2个参数的和."
+   total = arg1 + arg2
+   print "函数内 : ", total
+   return total
+ 
+# 调用sum函数
+total = sum( 10, 20 )
+```
+
+## 2. 返回多个值
+**Python 的函数返回值，其实返回的是一个 tuple**，但写起来更方便。
+例15：
+```python
+>>> x, y = move(100, 100, 60, math.pi / 6)
+>>> print(x, y)
+151.96152422706632 70.0
+# 但其实这只是一种假象，Python函数返回的仍然是单一值：
+>>> r = move(100, 100, 60, math.pi / 6)
+>>> print(r)
+(151.96152422706632, 70.0)
+```
+**在语法上，返回一个tuple可以省略括号，而多个变量可以同时接收一个tuple，按位置赋给对应的值**
+
+## 3. yield
+如果一个函数定义中包含`yield`关键字，那么这个函数就不再是一个普通函数，而是一个`generator`。
+generator和函数的执行流程不一样。
+函数是顺序执行，遇到return语句或者最后一行函数语句就返回。而变成generator的函数，在每次调用next()的时候执行，遇到yield语句返回，再次执行时从上次返回的yield语句处继续执行。
+例16：
+```python
+def foo():
+    print("starting...")
+    while True:
+        res = yield 4
+        print("res:",res)
+g = foo()
+print(next(g))
+print("*"*20)
+print(next(g))
+```
+详解请见：[生成器和迭代器](evernote:///view/13038597/s58/220afe38-9902-47c3-8e5c-007b889e546f/220afe38-9902-47c3-8e5c-007b889e546f/)、 [yield的用法一例
+](evernote:///view/13038597/s58/e360f1cb-2b68-436f-b759-888f485fb35d/e360f1cb-2b68-436f-b759-888f485fb35d/)
+
+# 六、空函数
+如果想定义一个什么事也不做的空函数，可以用pass语句：
+例17：
+```python
+def nop():
+    pass
+```
+实际上pass可以用来作为占位符，比如现在还没想好怎么写函数的代码，就可以先放一个pass，让代码能运行起来。
+pass还可以用在其他语句里，比如：
+例18：
+```python
+if age >= 18:
+    pass
+```
+缺少了pass，代码运行就会有语法错误。
+
+# 七、匿名函数
+Python 使用 `lambda` 来创建匿名函数
+- lambda 只是一个表达式，函数体比 def 简单的多。
+- lambda 的主体是一个表达式，而不是一个代码块。仅仅能在 lambda 表达式中封装有限的逻辑进去。
+- lambda 函数拥有自己的命名空间[^longnote1]，且不能访问自有参数列表之外或全局命名空间里的参数。
+- 虽然 lambda 函数看起来只能写一行，却不等同于C 或C++ 的内联函数，后者的目的是调用小函数时不占用栈内存从而增加运行效率。
+
+## 语法：
+```python
+lambda [arg1 [,arg2,.....argn]]:expression
+```
+例19：
+```python
+# 可写函数说明
+sum = lambda arg1, arg2: arg1 + arg2
+ 
+# 调用sum函数
+print "相加后的值为 : ", sum( 10, 20 )
+print "相加后的值为 : ", sum( 20, 20 )
+```
+
+# 八、变量作用域
+程序的所有变量并不是在任意一个位置都可以访问，访问权限取决于变量声明的位置。
+变量的作用域决定了哪一部分程序可以访问哪个特定的变量名称。
+最基本的变量作用域有两种：
+- 全局变量
+- 局部变量
+
+调用函数时，所有在函数内声明的变量名称都将被加入到作用域中。
+
+## 1. 全局变量
+定义在函数外的变量，拥有全局作用域。
+可以在整个程序范围内访问。
+## 2. 局部变量
+定义在函数内的变量，拥有一个函数内的局部作用域。
+只能在被声明的函数内部访问。
+例20：
+```python
+total = 0 # 这是一个全局变量
+# 可写函数说明
+def sum( arg1, arg2 ):
+   #返回2个参数的和."
+   total = arg1 + arg2 # total在这里是局部变量.
+   print "函数内是局部变量 : ", total
+   return total
+ 
+#调用sum函数
+sum( 10, 20 )
+print "函数外是全局变量 : ", total
+```
+输出
+```
+函数内是局部变量 :  30
+函数外是全局变量 :  0
+```
+
+
+
+[^longnote0]: 
+    函数重载（英语：function overloading），是Ada、C++、C#、D和Java等编程语言中具有的一项特性，这项特性允许创建数项名称相同但输入输出类型或个数不同的子程序，它可以简单地称为一个单独功能可以执行多项任务的能力。
+    Java支持函数重载。当多个同名函数的形式参数的数据类型不同或数量不同时，就构成了函数的重载。
+    ```java
+    public class Test{
+        public void A(){                //这是一个无形式参数名称为A的函数。
+            
+        }
+        public void A(int a){           //这个函数有一个数据类型为int的函数，函数数目不同，故构成重载。
+            
+        }
+        public void A(String a){        //这个函数数据类型为String，形式参数的数据类型不同，故构成重载。
+            
+        }
+        public void A(int a,int b){     //这个函数有两个形式参数，故构成重载。
+            
+        }
+        public int A(int a,String b){    //这个函数的第二个形式参数的数据类型与上一个函数的数据类型不同，故构成重载。
+            /*
+            重载的函数的返回值可以不同，但是如果两个或多个函数只有返回值不同，不足以构成重载。
+            */
+        }
+    }
+    ```
+
+[^longnote1]: 
+    命名空间（英語：Namespace），也称命名空间、名称空间等，它表示着一个标识符（identifier）的可见范围。 一个标识符可在多个命名空间中定义，它在不同命名空间中的含义是互不相干的。 这样，在一个新的命名空间中可定义任何标识符，它们不会与任何已有的标识符发生冲突，因为已有的定义都处于其他命名空间中。
+
+[^参考0]:
+    形参与实参的区别 https://docs.python.org/zh-cn/3/faq/programming.html#faq-argument-vs-parameter
+[^参考1]:
+    parameter -- 形参 https://docs.python.org/zh-cn/3/glossary.html#term-parameter
+[^参考2]:
+    PEP 570 -- Python Positional-Only 参数 https://python.freelycode.com/contribution/detail/1611
+    PEP 570 -- Python Positional-Only Parameters https://www.python.org/dev/peps/pep-0570/
+
+
+
+
+
+
+
+
+
