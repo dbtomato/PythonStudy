@@ -1,0 +1,204 @@
+---
+title: 12 - 1 - metaclass (元类/类方法)
+tags: metaclass,元类,类方法,Python,type()
+renderNumberedHeading: true
+grammar_cjkRuby: true
+---
+
+Author:  Qiao My
+Create_Time: 2020-3-6
+
+[toc]
+
+
+
+原文链接：https://www.liaoxuefeng.com/wiki/1016959663602400/1017592449371072#0
+
+# type()
+`type()` 函数可以查看一个类型或变量的类型。
+也可以创建出新的类型。
+使用`type()`创建 class 对象，需要依次传入 3个参数：
+- class 名称
+- 继承的父类集合，注意Python 支持多重继承，注意 tuple的单元素写法；
+- class 的方法名称与函数绑定
+
+例：
+```python
+def fn(self, name='world'): # 先定义函数
+    print('Hello, %s.' % name)
+# 创建Hello class
+Hello = type('Hello', (object,), dict(hello=fn))
+# 调用类
+h = Hello()
+h.hello()
+Hello, world.
+print(type(Hello))
+<class 'type'>
+print(type(h))
+<class '__main__.Hello'>
+```
+
+通过 type() 创建类和直接写 class 是完全一样的。Python 解释器遇到 class 定义时，仅仅是扫描一下 class 定义的语法，然后调用 type() 函数创建 class。
+
+动态语言原生的支持运行期间动态创建类。而静态语言运行期间创建类，则必须构造源代码字符串再调用编译器或者借助工具生成字节码实现，本质上都是动态编译，非常复杂。
+
+
+# metaclass（元类/类方法）
+要控制类的创建行为，还可以使用 metalcass(元类)。
+
+简单解释：
+创建实例需要先定义类，而创建类需要先定义 metalclass。
+顺序为：先定义 metaclass，就可以创建类，最后创建实例。
+
+metaclass 允许创建类、修改类，可以把类看成是 metaclass创建出来的“实例”。
+
+metaclass 是类的模板，必须从`type` 派生。
+
+按照默认习惯，metaclass 的类总是以 Metaclass结尾，以便清除的表示这是一个 metaclass。
+例：
+```python
+# metaclass是类的模板，所以必须从`type`类型派生：
+class ListMetaclass(type):
+    def __new__(cls, name, bases, attrs):
+        attrs['add'] = lambda self, value: self.append(value)
+        return type.__new__(cls, name, bases, attrs)
+
+# 使用 metaclass 创建类
+class MyList(list, metaclass=ListMetaclass):
+    pass
+```
+
+`__new__()` 方法接收到的参数依次是：
+- 1. 当前准备创建的类的对象；
+- 2. 类的名字；
+- 3. 类继承的父类集合
+- 4. 类的方法集合。
+
+# metaclass 元类的应用
+ORM 全称“Object Relational Mapping”，即 对象-关系 映射，就是把关系数据库的一行映射为一个对象，也就是一个类对应一个表，这样，写代码更简单，不用直接操作SQL语句。
+
+编写 ORM 框架，所有的类智能动态定义。因为只有使用者才能根据表的结构定义出对应的类。
+
+编写底层模块第一步，先把调用接口写出来。
+比如，使用者如果使用这个 ORM 框架，想定义一个 User类来操作对应的的数据库表User，我们期待他写出如下代码
+```python
+class User(Model):
+    # 定义类的属性到列的映射：
+    id = IntegerField('id')
+    name = StringField('username')
+    email = StringField('email')
+    password = StringField('password')
+
+# 创建一个实例：
+u = User(id=12345, name='Michael', email='test@orm.org', password='my-pwd')
+# 保存到数据库：
+u.save()
+```
+其中，父类 Model和属性类型 StringField、IntegerField是由 ORM框架提供的，剩下的魔术方法比如 save()全部由 metaclass自动完成。虽然 metaclass的编写会比较复杂，但ORM 的使用者用起来却异常简单。
+例：
+实现该ORM
+```python
+# 定义Field类，它负责保存数据库表的字段名和字段类型
+class Field(object):
+
+    def __init__(self, name, column_type):
+        self.name = name
+        self.column_type = column_type
+
+    def __str__(self):
+        return '<%s:%s>' % (self.__class__.__name__, self.name)
+
+# 在Field的基础上，进一步定义各种类型的Field，比如StringField，IntegerField等等：
+class StringField(Field):
+
+    def __init__(self, name):
+        super(StringField, self).__init__(name, 'varchar(100)')
+
+class IntegerField(Field):
+
+    def __init__(self, name):
+        super(IntegerField, self).__init__(name, 'bigint')
+
+# 下一步，就是编写最复杂的 ModelMetaclass了：
+class ModelMetaclass(type):
+
+    def __new__(cls, name, bases, attrs):
+        if name=='Model':
+            return type.__new__(cls, name, bases, attrs)
+        print('Found model: %s' % name)
+        mappings = dict()
+        for k, v in attrs.items():
+            if isinstance(v, Field):
+                print('Found mapping: %s ==> %s' % (k, v))
+                mappings[k] = v
+        for k in mappings.keys():
+            attrs.pop(k)
+        attrs['__mappings__'] = mappings # 保存属性和列的映射关系
+        attrs['__table__'] = name # 假设表名和类名一致
+        return type.__new__(cls, name, bases, attrs)
+
+# 定义定义基类 Model：
+class Model(dict, metaclass=ModelMetaclass):
+
+    def __init__(self, **kw):
+        super(Model, self).__init__(**kw)
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(r"'Model' object has no attribute '%s'" % key)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def save(self):
+        fields = []
+        params = []
+        args = []
+        for k, v in self.__mappings__.items():
+            fields.append(v.name)
+            params.append('?')
+            args.append(getattr(self, k, None))
+        sql = 'insert into %s (%s) values (%s)' % (self.__table__, ','.join(fields), ','.join(params))
+        print('SQL: %s' % sql)
+        print('ARGS: %s' % str(args))
+```
+当用户定义一个 class User(Model)时，Python解释器首先在当前类User的定义中查找 metaclass，如果没有找到，就继续在父 Model中查找 metaclass，找到了，就使用 Model中定义的 metaclass的 ModelMetaclass来创建 User类，也就是说，metaclass 可以隐式地继承到子类，但子类自己却感觉不到。
+
+ModelMetaclass 中，做了如下操作：
+- 1. 排除掉对Model类的修改；
+- 2. 在当前类（比如User）中查找定义的类的所有属性，如果找到一个Field属性，就把它保存到一个__mappings__的dict中，同时从类属性中删除该Field属性，否则，容易造成运行时错误（实例的属性会遮盖类的同名属性）；
+- 3. 把表名保存到__table__中，这里简化为表名默认为类名。
+
+在 Model类中，就可以定义各种操作数据库的方法，比如 save()，delete()，find()，update等等。
+
+我们实现了 save()方法，把一个实例保存到数据库中。因为有表名，属性到字段的映射和属性值的集合，就可以构造出 INSERT语句。
+
+编写代码试试：
+```python
+u = User(id=12345, name='Michael', email='test@orm.org', password='my-pwd')
+u.save()
+```
+输出如下：
+```python
+Found model: User
+Found mapping: email ==> <StringField:email>
+Found mapping: password ==> <StringField:password>
+Found mapping: id ==> <IntegerField:uid>
+Found mapping: name ==> <StringField:username>
+SQL: insert into User (password,email,username,id) values (?,?,?,?)
+ARGS: ['my-pwd', 'test@orm.org', 'Michael', 12345]
+```
+
+
+
+
+
+
+
+
+
+
+
+

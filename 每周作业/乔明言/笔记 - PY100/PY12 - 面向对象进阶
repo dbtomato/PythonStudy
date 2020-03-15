@@ -1,0 +1,282 @@
+---
+title: 12 - 面向对象进阶
+tags: 面向对象,封装,继承,多态,多继承,@property,抽象类,枚举类,元类,运算符重载
+renderNumberedHeading: true
+grammar_cjkRuby: true
+---
+
+Author:  Qiao My
+Create_Time: 2020-3-5
+
+[toc]
+
+
+
+
+
+
+# 一、面向对象 三大支柱
+面向对象思想三大要素(支柱)：**封装、继承、多态**
+
+## 1. 封装
+ 封装：隐藏一切可以隐藏的实现细节，只向外界暴露(提供)简单的变编程接口。
+类中定义的方法就是对 数据和对数据的操作 封装。
+
+方法的外部视图：方法的名字和传入参数
+方法的内部视图：方法内部的实现细节
+
+## 2. 继承
+即一个`派生类(derived class)` 继承 `基类(base class)`的属性和方法，，减少重复代码的编写。
+提供继承信息的类称为`父类`，得到继承信息的称为`子类`也叫`派生类`、`衍生类`。
+子类 除了继承父类听的属性和方法，可以定义自己特有的属性和方法，所以子类比父类拥有更多的能力。
+在实际开发中，经常会用子类对象替换掉一个父类对象，这是面向对象变成中的一个常见行为，对应原则称之为**里氏替换原则**。
+语法
+```Python
+class DerivedClassName(BaseClassName1):
+    <statement-1>
+
+# 基类定义在另一模块
+class DerivedClassName(modname.BaseClassName):
+
+# 多继承
+class DerivedClassName(Base1, Base2, Base3):
+```
+
+- 继承允许把一个派生类的对象作为一个基类对象对待。
+- 类的继承允许多个基类
+- 派生类可以覆盖基类中的任何方法
+- 派生类方法中可以调用基类的同名方法，使用时从左至右搜索，先查找子类，如不存在，再搜索基类。
+- 基类必须与派生类定义在同一个作用域内。？？？
+
+### 多继承
+在设计类的继承关系时，主线(单一)继承之外，需要“混入”额外的功能，通过 多重继承 就可以实现。
+
+这种设计称之为**MixIn**设计。
+
+
+## 3. 多态
+通过方法重写可以让父类的同一个行为在子类中拥有不同的实现版本，当调用这个经过子类重写的方法时，不同的子类对象会表现出不同的行为，这就是`多态(paly-morphism)`。
+`重写`：子类在继承父类方法后，可以对父类已有的方法给出新的实现版本，这个动作称之为方法重写(override)。
+
+### `super()`
+`super()` 函数用于调用父类(超类)中的方法。
+例：
+```python
+class Parent:        # 定义父类
+   def myMethod(self):
+      print ('调用父类方法')
+ 
+class Child(Parent): # 定义子类
+   def myMethod(self):
+      print ('调用子类方法')
+ 
+c = Child()          # 子类实例
+c.myMethod()         # 子类调用重写方法
+super(Child,c).myMethod() #用子类对象调用父类已被覆盖的方法
+```
+
+
+# 二、 `@property`装饰器
+我们建议将属性命名以 单下划线 开头，通过这种方式来暗示属性是受保护的，不建议外界直接访问。
+如果想访问属性可以通过属性的`getter（访问器）`和`setter（修改器）`方法进行操作。
+可以使用 `@property` 包装器来包装`getter`、`setter`方法。
+
+或者说，通过`@property`装饰器把一个方法变成属性调用。
+通过`@property`装饰getter的同时，`@property`还会创建另一个装饰器`@atr_name.setter`，负责把 setter方法变成属性赋值。
+
+**只读属性**：只定义 getter方法，不定义 setter 方法，就是一个只读属性。
+
+例：
+```python
+class Person(object):
+
+    def __init__(self, name, age):
+        self._name = name
+        self._age = age
+
+    # 访问器 - getter方法
+    @property
+    def name(self):
+        return self._name
+
+    # 访问器 - getter方法
+    @property
+    def age(self):
+        return self._age
+
+    # 修改器 - setter方法
+    @age.setter
+    def age(self, age):
+        self._age = age
+
+    def play(self):
+        if self._age <= 16:
+            print('%s正在玩飞行棋.' % self._name)
+        else:
+            print('%s正在玩斗地主.' % self._name)
+
+
+def main():
+    person = Person('王大锤', 12)
+    person.play()
+    person.age = 22
+    person.play()
+    # person.name = '白元芳'  # AttributeError: can't set attribute
+
+
+if __name__ == '__main__':
+    main()
+```
+
+
+
+
+# 三、类之间的关系
+类和类之间的关系有三种：`is-a`、`has-a`、`use-a`
+`is-a` ：继承或泛化
+`has-a`：关联；关联关系如果是整体和部分的关联，称之为`聚合`关系；如果整体进一步负责了部分的生命周期(整体和部分不可分割，同时同在也同时消亡)，那么就是最强的关联关系，称为`合成`关系。
+`use-a`：依赖；
+
+例如，学生和人的关系、手机和电子产品 属于继承关系；部门和员工、汽车和引擎 属于关联关系；司机和汽车 属于依赖关系。
+
+利用类之间的关系，可以在已有类的基础上来完成某些操作，也可以再已有类的基础上创建新的类。
+这些都是实现代码复用的重要手段。
+复用现有代码不仅可以减少开发工作量，也有利于代码的管理和维护。
+
+UML(统一建模语言) 可以用来进行面向对象建模。把类和类之间的关系用标准化的图形符号描述出来。
+《UML面向对象设计基础》 https://e.jd.com/30392949.html
+
+
+# 四、特定的类
+
+## 1. 抽象类
+不能够创建对象的类，专门用于被其他类继承。
+
+Python 中并不支持抽象类，但可以通过`abc`模块的`ABCMeta`元类和`abstractmethod`包装器来达到抽象类的效果。
+当一个类中存在抽象方法，那么这个类就不能够实例化(创建对象)。
+例：
+```python
+from abc import ABCMeta, abstractmethod
+
+class Pet(object, metaclass=ABCMeta):
+    """宠物"""
+    def __init__(self, nickname):
+        self._nickname = nickname
+
+    @abstractmethod
+    def make_voice(self):
+        """发出声音"""
+        pass
+
+class Dog(Pet):
+    """狗"""
+    def make_voice(self):
+        print('%s: 汪汪汪...' % self._nickname)
+
+class Cat(Pet):
+    """猫"""
+    def make_voice(self):
+        print('%s: 喵...喵...' % self._nickname)
+
+def main():
+    pets = [Dog('旺财'), Cat('凯蒂'), Dog('大黄')]
+    for pet in pets:
+        pet.make_voice()
+
+if __name__ == '__main__':
+    main()
+```
+
+
+## 2. 枚举类
+需要定义常量时，一个方法时用**大写变量**通过**整数**来定义，缺点是类型是int，并且仍然是变量。
+更好的方法：为枚举类型定义一个 class 类型，每个常量都是 class 的一个唯一实例。
+Python 提供了 `Enum` 类实现枚举类功能。
+例：
+```python
+from enum import Enum
+
+Month = Enum('Month', ('Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'))
+
+for name, member in Month.__members__.items():
+    print(name, '=>', member, ',', member.value)
+``` 
+`value` 属性是自动赋值给成员的`int` 常量。默认从 1 开始计数。
+如果需要更 精确的控制枚举类型，可以从`Enum`派生出自定义类。
+例：
+```python
+from enum import Enum, unique
+
+@unique
+class Weekday(Enum):
+    Sun = 0 # Sun的value被设定为0
+    Mon = 1
+    Tue = 2
+    Wed = 3
+    Thu = 4
+    Fri = 5
+    Sat = 6
+```
+`@unique` 装饰器可以帮助我们检查保证没有重复值。
+
+例：
+访问枚举类的方法
+```python
+>>> day1 = Weekday.Mon
+>>> print(day1)
+Weekday.Mon
+>>> print(Weekday.Tue)
+Weekday.Tue
+>>> print(Weekday['Tue'])
+Weekday.Tue
+>>> print(Weekday.Tue.value)
+2
+>>> print(Weekday(1))
+Weekday.Mon
+>>> print(day1 == Weekday(1))
+True
+>>> Weekday(7)
+Traceback (most recent call last):
+  ...
+ValueError: 7 is not a valid Weekday
+>>> for name, member in Weekday.__members__.items():
+...     print(name, '=>', member)
+...
+Sun => Weekday.Sun
+Mon => Weekday.Mon
+Tue => Weekday.Tue
+Wed => Weekday.Wed
+Thu => Weekday.Thu
+Fri => Weekday.Fri
+Sat => Weekday.Sat
+```
+
+## 3.元类
+参考 [《metaclass (元类/类方法)》](evernote:///view/13038597/s58/1ae05124-9c7f-41ba-a1a6-cd70bd881c76/1ae05124-9c7f-41ba-a1a6-cd70bd881c76/)
+
+注意元类和抽象类的关系，以及区别。
+
+# 对象销毁(垃圾回收)
+Python 使用了**引用计数**这一简单技术来跟踪和回收垃圾。
+Python
+
+
+
+# 运算符重载
+Python 支持运算符重载，可以对类的专有方法进行重载。
+```python
+class Vector:
+   def __init__(self, a, b):
+      self.a = a
+      self.b = b
+ 
+   def __str__(self):
+      return 'Vector (%d, %d)' % (self.a, self.b)
+   
+   def __add__(self,other):
+      return Vector(self.a + other.a, self.b + other.b)
+ 
+v1 = Vector(2,10)
+v2 = Vector(5,-2)
+print (v1 + v2)
+```
