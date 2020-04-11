@@ -1,0 +1,10 @@
+<!--用于自定义admin管理页面title-->
+{% extends "admin/base.html" %}
+
+{% block title %}{{ title }} | {{ site_title|default:_('Django site admin') }}{% endblock %}
+
+{% block branding %}
+<h1 id="site-name"><a href="{% url 'admin:index' %}">就是投票啊！！</a></h1>
+{% endblock %}
+
+{% block nav-global %}{% endblock %}
